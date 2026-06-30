@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftInk Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-card h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* Admin Layout */
+        .admin-layout {
+            display: none;
+        }
+
+        .admin-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header h1 {
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px 0;
+        }
+
+        .sidebar-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover {
+            background: #f1f5f9;
+        }
+
+        .sidebar-item.active {
+            background: #0f172a;
+            color: white;
+            border-radius: 0 20px 20px 0;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            overflow-x: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 800;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .status-new { background: #fef3c7; color: #92400e; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-proofing { background: #ede9fe; color: #5b21b6; }
+        .status-printing { background: #fed7aa; color: #9a3412; }
+        .status-ready { background: #d1fae5; color: #065f46; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+
+        .urgent-badge {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        select, textarea, input {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .inline-edit {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Grid for portfolio */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .portfolio-item {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .portfolio-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .portfolio-item .info {
+            padding: 12px;
+        }
+
+        /* Panels */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar-item span:not(.emoji) {
+                display: none;
+            }
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- Auth Container -->
+    <div id="authContainer" class="auth-container">
+        <div class="auth-card">
+            <h2>SwiftInk Admin</h2>
+            <p style="color: #64748b; margin-bottom: 24px;">Sign in to manage your print shop</p>
+            <input type="email" id="adminEmail" placeholder="Email" autocomplete="email">
+            <input type="password" id="adminPassword" placeholder="Password" autocomplete="current-password">
+            <button onclick="login()">Sign In</button>
+            <button onclick="showSignup()" style="background: #e2e8f0; color: #0f172a; margin-top: 12px;">Create Account (First Time)</button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="admin-layout">
+        <div class="admin-header">
+            <h1>⚡ SwiftInk Admin Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <div class="admin-container">
+            <div class="sidebar">
+                <div class="sidebar-item active" data-panel="dashboard">📊 Dashboard</div>
+                <div class="sidebar-item" data-panel="orders">📦 Orders</div>
+                <div class="sidebar-item" data-panel="pricing">💰 Pricing</div>
+                <div class="sidebar-item" data-panel="portfolio">🖼️ Portfolio</div>
+                <div class="sidebar-item" data-panel="content">✏️ Content</div>
+                <div class="sidebar-item" data-panel="production">🏭 Production</div>
+            </div>
+            <div class="main-content">
+                <!-- Dashboard Panel -->
+                <div id="dashboardPanel" class="panel active">
+                    <div class="stats-grid" id="statsGrid"></div>
+                    <div class="table-container">
+                        <h3 style="padding: 20px; margin: 0;">Recent Orders</h3>
+                        <div id="recentOrdersTable"></div>
+                    </div>
+                </div>
+
+                <!-- Orders Panel -->
+                <div id="ordersPanel" class="panel">
+                    <div style="margin-bottom: 20px;">
+                        <h2>Order Management</h2>
+                        <select id="orderFilter" onchange="loadOrders()">
+                            <option value="all">All Orders</option>
+                            <option value="urgent">Urgent Only</option>
+                            <option value="new">New</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="proofing">Proofing</option>
+                            <option value="printing">Printing</option>
+                            <option value="ready">Ready</option>
+                            <option value="delivered">Delivered</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <div id="ordersTable"></div>
+                    </div>
+                </div>
+
+                <!-- Pricing Panel -->
+                <div id="pricingPanel" class="panel">
+                    <h2>Quote & Pricing Control</h2>
+                    <div id="pricingEditor"></div>
+                    <button onclick="savePricing()" style="margin-top: 20px;">Save All Changes</button>
+                </div>
+
+                <!-- Portfolio Panel -->
+                <div id="portfolioPanel" class="panel">
+                    <h2>Portfolio Management</h2>
+                    <button onclick="openPortfolioModal()">+ Add New Portfolio Item</button>
+                    <div id="portfolioGrid" class="portfolio-grid"></div>
+                </div>
+
+                <!-- Content Panel -->
+                <div id="contentPanel" class="panel">
+                    <h2>Content Editing</h2>
+                    <div id="contentEditor"></div>
+                    <button onclick="saveContent()">Save Changes</button>
+                </div>
+
+                <!-- Production Panel -->
+                <div id="productionPanel" class="panel">
+                    <h2>Production Tracker</h2>
+                    <div id="productionTracker"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <h3>Order Details</h3>
+            <div id="orderDetailContent"></div>
+            <div style="margin-top: 20px;">
+                <h4>Add Note</h4>
+                <textarea id="orderNote" rows="3" style="width: 100%;"></textarea>
+                <button onclick="addOrderNote()">Add Note</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <h4>Update Status</h4>
+                <select id="orderStatusUpdate">
+                    <option value="new">New</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="proofing">Proofing</option>
+                    <option value="printing">Printing</option>
+                    <option value="ready">Ready</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                <button onclick="updateOrderStatus()">Update Status</button>
+            </div>
+            <button onclick="closeModal()" style="margin-top: 16px; background: #64748b;">Close</button>
+        </div>
+    </div>
+
+    <!-- Portfolio Modal -->
+    <div id="portfolioModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Portfolio Item</h3>
+            <input type="text" id="portfolioTitle" placeholder="Title" style="width: 100%; margin-bottom: 12px;">
+            <select id="portfolioCategory" style="width: 100%; margin-bottom: 12px;">
+                <option value="">Select Category</option>
+                <option value="eulogies">Eulogies</option>
+                <option value="weddings">Weddings</option>
+                <option value="posters">Posters</option>
+                <option value="banners">Banners</option>
+                <option value="wraps">Wraps</option>
+                <option value="businesscards">Business Cards</option>
+                <option value="flyers">Flyers</option>
+                <option value="idcards">ID Cards</option>
+            </select>
+            <input type="file" id="portfolioImage" accept="image/*">
+            <div style="margin-top: 16px;">
+                <label>
+                    <input type="checkbox" id="portfolioVisible" checked> Visible on site
+                </label>
+            </div>
+            <button onclick="uploadPortfolio()" style="margin-top: 16px;">Upload</button>
+            <button onclick="closePortfolioModal()" style="margin-top: 8px; background: #64748b;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration - REPLACE WITH YOUR CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTWBCzMXz1K25zEckP3gN3F9E5PphwbyY",
+ 	    authDomain: "swiftink-64a05.firebaseapp.com",
+            projectId: "swiftink-64a05",
+            storageBucket: "swiftink-64a05.firebasestorage.app",
+            messagingSenderId: "693593977308",
+            appId: "1:693593977308:web:34ed74e69ee90141a31f19",
+            measurementId: "G-DXFNJ7GEHM"
+
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+
+        let currentUser = null;
+        let currentOrderId = null;
+
+        // Auth Functions
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                loadAllData();
+            } else {
+                document.getElementById('authContainer').style.display = 'flex';
+                document.getElementById('adminDashboard').style.display = 'none';
+            }
+        });
+
+        function login() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            auth.signInWithEmailAndPassword(email, password).catch(error => {
+                alert('Login failed: ' + error.message);
+            });
+        }
+
+        function showSignup() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            auth.createUserWithEmailAndPassword(email, password).then(() => {
+                alert('Account created! You are now signed in.');
+            }).catch(error => {
+                alert('Signup failed: ' + error.message);
+            });
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await Promise.all([
+                loadOrders(),
+                loadPricing(),
+                loadPortfolio(),
+                loadContent(),
+                loadDashboardStats()
+            ]);
+        }
+
+        // Dashboard Stats
+        async function loadDashboardStats() {
+            const ordersSnap = await db.collection('orders').get();
+            const orders = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            const totalOrders = orders.length;
+            const convertedOrders = orders.filter(o => o.converted === true).length;
+            const urgentOrders = orders.filter(o => o.urgent === true && o.status !== 'delivered').length;
+            
+            // Most requested services
+            const serviceCount = {};
+            orders.forEach(o => {
+                const service = o.serviceType;
+                if (service) serviceCount[service] = (serviceCount[service] || 0) + 1;
+            });
+            const topServices = Object.entries(serviceCount).sort((a,b) => b[1] - a[1]).slice(0, 3);
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><h3>Total Orders</h3><div class="value">${totalOrders}</div></div>
+                <div class="stat-card"><h3>Conversion Rate</h3><div class="value">${totalOrders ? Math.round(convertedOrders/totalOrders*100) : 0}%</div></div>
+                <div class="stat-card"><h3>Urgent Jobs</h3><div class="value">${urgentOrders}</div></div>
+                <div class="stat-card"><h3>Top Service</h3><div class="value">${topServices[0]?.[0] || 'None'}</div></div>
+            `;
+            
+            // Recent orders table
+            const recentOrders = orders.slice(0, 10);
+            document.getElementById('recentOrdersTable').innerHTML = `
+                <table>
+                    <thead><tr><th>Date</th><th>Client</th><th>Service</th><th>Status</th><th>Urgent</th></tr></thead>
+                    <tbody>
+                        ${recentOrders.map(order => `
+                            <tr>
+                                <td>${new Date(order.createdAt?.toDate()).toLocaleDateString()}</td>
+                                <td>${order.clientName || 'Unknown'}</td>
+                                <td>${order.serviceType || 'N/A'}</td>
+                                <td><span class="status-badge status-${order.status || 'new'}">${order.status || 'New'}</span></td>
+                                <td>${order.urgent ? '<span class="urgent-badge">Urgent</span>' : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Orders Management
+        async function loadOrders() {
+            const filter = document.getElementById('orderFilter')?.value || 'all';
+            let query = db.collection('orders').orderBy('createdAt', 'desc');
+            const snap = await query.get();
+            let orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            if (filter === 'urgent') orders = orders.filter(o => o.urgent === true);
+            else if (filter !== 'all') orders = orders.filter(o => o.status === filter);
+            
+            document.getElementById('ordersTable').innerHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Date</th><th>Client</th><th>Service</th><th>Quantity</th><th>Status</th>
+                        <th>Payment</th><th>Urgent</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                        ${orders.map(order => `
+                            <tr>
+                                <td>${new Date(order.createdAt?.toDate()).toLocaleDateString()}</td>
+                                <td>${order.clientName || 'Unknown'}</td>
+                                <td>${order.serviceType || 'N/A'}</td>
+                                <td>${order.quantity || 'N/A'}</td>
+                                <td><span class="status-badge status-${order.status || 'new'}">${order.status || 'New'}</span></td>
+                                <td>${order.depositPaid ? 'Deposit ✓' : '-'} ${order.balancePaid ? 'Full ✓' : ''}</td>
+                                <td>${order.urgent ? '<span class="urgent-badge">Urgent</span>' : '-'}</td>
+                                <td><button class="small" onclick="viewOrder('${order.id}')">View</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function viewOrder(orderId) {
+            currentOrderId = orderId;
+            const doc = await db.collection('orders').doc(orderId).get();
+            const order = doc.data();
+            
+            document.getElementById('orderDetailContent').innerHTML = `
+                <p><strong>Client:</strong> ${order.clientName}</p>
+                <p><strong>Phone:</strong> ${order.phone}</p>
+                <p><strong>Service:</strong> ${order.serviceType}</p>
+                <p><strong>Quantity:</strong> ${order.quantity}</p>
+                <p><strong>Deadline:</strong> ${order.deadline}</p>
+                <p><strong>Message:</strong> ${order.message || 'None'}</p>
+                <p><strong>Source:</strong> ${order.source || 'website'}</p>
+                <div class="inline-edit">
+                    <strong>Internal Notes:</strong>
+                    <div id="orderNotesList">${order.notes?.map(n => `<div>• ${n}</div>`).join('') || 'No notes'}</div>
+                </div>
+                <div class="inline-edit">
+                    <strong>Payment Status:</strong><br>
+                    <label><input type="checkbox" id="depositPaid" ${order.depositPaid ? 'checked' : ''}> 40% Deposit Received</label><br>
+                    <label><input type="checkbox" id="balancePaid" ${order.balancePaid ? 'checked' : ''}> Balance Cleared</label>
+                    <button onclick="updatePaymentStatus()" class="small">Update Payment</button>
+                </div>
+                <div class="inline-edit">
+                    <strong>Production:</strong><br>
+                    <label>Expected Completion: <input type="date" id="expectedCompletion" value="${order.expectedCompletion || ''}"></label>
+                    <button onclick="updateExpectedCompletion()" class="small">Set Date</button>
+                </div>
+            `;
+            document.getElementById('orderStatusUpdate').value = order.status || 'new';
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        async function updateOrderStatus() {
+            const newStatus = document.getElementById('orderStatusUpdate').value;
+            await db.collection('orders').doc(currentOrderId).update({
+                status: newStatus,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert('Status updated');
+            loadOrders();
+            closeModal();
+        }
+
+        async function addOrderNote() {
+            const note = document.getElementById('orderNote').value;
+            if (!note) return;
+            const doc = await db.collection('orders').doc(currentOrderId).get();
+            const currentNotes = doc.data().notes || [];
+            await db.collection('orders').doc(currentOrderId).update({
+                notes: [...currentNotes, `${new Date().toLocaleString()}: ${note}`]
+            });
+            document.getElementById('orderNote').value = '';
+            viewOrder(currentOrderId);
+        }
+
+        async function updatePaymentStatus() {
+            const depositPaid = document.getElementById('depositPaid').checked;
+            const balancePaid = document.getElementById('balancePaid').checked;
+            await db.collection('orders').doc(currentOrderId).update({
+                depositPaid, balancePaid
+            });
+            alert('Payment status updated');
+        }
+
+        async function updateExpectedCompletion() {
+            const date = document.getElementById('expectedCompletion').value;
+            await db.collection('orders').doc(currentOrderId).update({
+                expectedCompletion: date
+            });
+            alert('Expected completion date set');
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        // Pricing Management
+        async function loadPricing() {
+            const pricingSnap = await db.collection('pricing').get();
+            const pricing = {};
+            pricingSnap.docs.forEach(doc => {
+                pricing[doc.id] = doc.data();
+            });
+            
+            // Default pricing if none exists
+            const defaultPricing = {
+                businesscards: { minOrder: 200, designFee: 500, basePrice: 0 },
+                eulogies: { minOrder: 100, designFee: 800, basePrice: 8200 },
+                weddings: { minOrder: 100, designFee: 0, basePrice: 7000 },
+                posters: { minOrder: 1, designFee: 600, basePrice: 0 },
+                banners: { minOrder: 1, designFee: 1000, basePrice: 0 },
+                flyers: { minOrder: 100, designFee: 0, basePrice: 15 },
+                idcards: { minOrder: 50, designFee: 0, basePrice: 250 }
+            };
+            
+            const mergedPricing = { ...defaultPricing, ...pricing };
+            
+            document.getElementById('pricingEditor').innerHTML = `
+                ${Object.entries(mergedPricing).map(([service, data]) => `
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                        <h3>${service.toUpperCase()}</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                            <label>Min Order: <input type="number" id="min_${service}" value="${data.minOrder}"></label>
+                            <label>Design Fee (KES): <input type="number" id="design_${service}" value="${data.designFee}"></label>
+                            <label>Base Price: <input type="number" id="base_${service}" value="${data.basePrice}"></label>
+                        </div>
+                        <label>Promotion/Surcharge: <input type="text" id="promo_${service}" placeholder="e.g., 10% off" value="${data.promotion || ''}"></label>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        async function savePricing() {
+            const services = ['businesscards', 'eulogies', 'weddings', 'posters', 'banners', 'flyers', 'idcards'];
+            for (const service of services) {
+                const minOrder = parseInt(document.getElementById(`min_${service}`).value);
+                const designFee = parseInt(document.getElementById(`design_${service}`).value);
+                const basePrice = parseInt(document.getElementById(`base_${service}`).value);
+                const promotion = document.getElementById(`promo_${service}`).value;
+                await db.collection('pricing').doc(service).set({
+                    minOrder, designFee, basePrice, promotion, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            alert('Pricing saved!');
+        }
+
+        // Portfolio Management
+        async function loadPortfolio() {
+            const portfolioSnap = await db.collection('portfolio').get();
+            const items = portfolioSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            document.getElementById('portfolioGrid').innerHTML = items.map(item => `
+                <div class="portfolio-item">
+                    ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.title}">` : '<div style="height:150px; background:#e2e8f0;"></div>'}
+                    <div class="info">
+                        <strong>${item.title}</strong>
+                        <p style="font-size:12px; color:#64748b;">${item.category}</p>
+                        <label><input type="checkbox" ${item.visible !== false ? 'checked' : ''} onchange="togglePortfolioVisibility('${item.id}', this.checked)"> Visible on site</label>
+                        <button class="small" onclick="deletePortfolioItem('${item.id}')" style="background:#ef4444; margin-top:8px;">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPortfolioModal() {
+            document.getElementById('portfolioModal').classList.add('active');
+        }
+
+        function closePortfolioModal() {
+            document.getElementById('portfolioModal').classList.remove('active');
+            document.getElementById('portfolioTitle').value = '';
+            document.getElementById('portfolioCategory').value = '';
+            document.getElementById('portfolioImage').value = '';
+        }
+
+        async function uploadPortfolio() {
+            const title = document.getElementById('portfolioTitle').value;
+            const category = document.getElementById('portfolioCategory').value;
+            const visible = document.getElementById('portfolioVisible').checked;
+            const file = document.getElementById('portfolioImage').files[0];
+            
+            if (!title || !category) {
+                alert('Please fill title and category');
+                return;
+            }
+            
+            let imageUrl = '';
+            if (file) {
+                const storageRef = storage.ref(`portfolio/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                imageUrl = await storageRef.getDownloadURL();
+            }
+            
+            await db.collection('portfolio').add({
+                title, category, visible, imageUrl,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            closePortfolioModal();
+            loadPortfolio();
+        }
+
+        async function togglePortfolioVisibility(id, visible) {
+            await db.collection('portfolio').doc(id).update({ visible });
+        }
+
+        async function deletePortfolioItem(id) {
+            if (confirm('Delete this portfolio item?')) {
+                await db.collection('portfolio').doc(id).delete();
+                loadPortfolio();
+            }
+        }
+
+        // Content Management
+        async function loadContent() {
+            const contentSnap = await db.collection('content').doc('siteContent').get();
+            const content = contentSnap.data() || {};
+            
+            document.getElementById('contentEditor').innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 16px;">
+                    <h3>Service Descriptions</h3>
+                    <textarea id="serviceDescriptions" rows="5" style="width:100%;">${JSON.stringify(content.serviceDescriptions || {}, null, 2)}</textarea>
+                    
+                    <h3 style="margin-top: 20px;">Turnaround Times</h3>
+                    <textarea id="turnaroundTimes" rows="5" style="width:100%;">${JSON.stringify(content.turnaroundTimes || {}, null, 2)}</textarea>
+                    
+                    <h3 style="margin-top: 20px;">FAQ</h3>
+                    <div id="faqEditor"></div>
+                    <button onclick="addFaqField()">+ Add FAQ</button>
+                </div>
+            `;
+            
+            const faqs = content.faqs || [];
+            document.getElementById('faqEditor').innerHTML = faqs.map((faq, i) => `
+                <div style="margin-bottom: 12px;">
+                    <input type="text" placeholder="Question" id="faq_q_${i}" value="${faq.q}" style="width:100%; margin-bottom:4px;">
+                    <textarea placeholder="Answer" id="faq_a_${i}" rows="2" style="width:100%;">${faq.a}</textarea>
+                </div>
+            `).join('');
+        }
+        
+        function addFaqField() {
+            const container = document.getElementById('faqEditor');
+            const index = container.children.length;
+            container.innerHTML += `
+                <div style="margin-bottom: 12px;">
+                    <input type="text" placeholder="Question" id="faq_q_${index}" style="width:100%; margin-bottom:4px;">
+                    <textarea placeholder="Answer" id="faq_a_${index}" rows="2" style="width:100%;"></textarea>
+                </div>
+            `;
+        }
+
+        async function saveContent() {
+            let serviceDescriptions, turnaroundTimes;
+            try {
+                serviceDescriptions = JSON.parse(document.getElementById('serviceDescriptions').value);
+            } catch(e) { serviceDescriptions = {}; }
+            try {
+                turnaroundTimes = JSON.parse(document.getElementById('turnaroundTimes').value);
+            } catch(e) { turnaroundTimes = {}; }
+            
+            const faqs = [];
+            const container = document.getElementById('faqEditor');
+            for (let i = 0; i < container.children.length; i++) {
+                const q = document.getElementById(`faq_q_${i}`)?.value;
+                const a = document.getElementById(`faq_a_${i}`)?.value;
+                if (q && a) faqs.push({ q, a });
+            }
+            
+            await db.collection('content').doc('siteContent').set({
+                serviceDescriptions, turnaroundTimes, faqs,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert('Content saved!');
+        }
+
+        // Production Tracker
+        async function loadProductionTracker() {
+            const ordersSnap = await db.collection('orders')
+                .where('status', 'in', ['in-progress', 'proofing', 'printing'])
+                .get();
+            const jobs = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            document.getElementById('productionTracker').innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Job</th><th>Client</th><th>Status</th><th>Expected Completion</th><th>Payment</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${jobs.map(job => `
+                                <tr>
+                                    <td>${job.serviceType}</td>
+                                    <td>${job.clientName}</td>
+                                    <td><span class="status-badge status-${job.status}">${job.status}</span></td>
+                                    <td>${job.expectedCompletion || 'Not set'}</td>
+                                    <td>${job.depositPaid ? 'Deposit ✓' : 'Pending'} ${job.balancePaid ? 'Full ✓' : ''}</td>
+                                    <td><button class="small" onclick="viewOrder('${job.id}')">Manage</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const panel = item.dataset.panel;
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(`${panel}Panel`).classList.add('active');
+                if (panel === 'production') loadProductionTracker();
+                if (panel === 'orders') loadOrders();
+            });
+        });
+    </script>
+</body>
+</html>
